@@ -3,9 +3,9 @@ var output;
 
 function init() {
 output = document.getElementById("panel");
-cliWebSocket();
 boton = document.getElementById("flash");
 led = document.getElementById("led");
+cliWebSocket();
 }
 function pulsado(){
     doSend("led");
@@ -27,40 +27,30 @@ function cliWebSocket() {
 }
 
 function onOpen(evt) {
-    //writeToScreen("CONNECTED");
     output.innerHTML="Conectado";
     doSend("WS Conectado");
 }
 
 function onClose(evt) {
-    //writeToScreen("DISCONNECTED");
     output.innerHTML="Desconectado";
 }
 
 function onMessage(evt) {
-    
    if(evt.data == "Flash=1"){flash.innerHTML="Flash liberado";}
    if(evt.data == "Flash=0"){flash.innerHTML="Flash pulsado";}
    if(evt.data == "led=0"){led.innerHTML="led encendido";}
    if(evt.data == "led=1"){led.innerHTML="led apagado";}
-    doSend("MSG_OK");
 }
 
 function onError(evt) {
-    writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
+output.innerHTML=evt.data;
 }
 
 function doSend(message) {
-    //writeToScreen("SENT: " + message);
     websocket.send(message);
 }
 
-function writeToScreen(message) {
-    var pre = document.createElement("p");
-    pre.style.wordWrap = "break-word";
-    pre.innerHTML = message;
-    output.appendChild(pre);
-}
+
 
 
 window.addEventListener("load", init, false);

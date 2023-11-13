@@ -39,7 +39,7 @@ class Servsock:
         for cliente in clientes:
             cliente[0].close()
         clientes.clear()
-        servidor.close()
+        self.servidor.close()
            
             
     async def recibe_datos(self):
@@ -63,7 +63,6 @@ class Servsock:
     async def finaliza(self):
         await self.desconecta_global()
         self.terminar=True
-        self.servidor.close()
         
     async def envia(self,cliente,mensaje):
         try:
@@ -202,7 +201,7 @@ class Servsock:
                 msg=data[14:]
                 strcrypto=data[10:14]
             result=self.encdecrypt(msg,strcrypto)
-            self.si_recibe(self,cliente,result)
+            await self.si_recibe(self,cliente,result)
             if self.enviobool:
                 await uasyncio.sleep(0)
                 mensajeenv=self.enviarws("OK recibido correctamente.",self.encriptado)
