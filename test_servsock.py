@@ -1,8 +1,8 @@
 import uasyncio
 import network
 import servsock
-red = 'MiFibra-5711'
-clave = 'viE5YEeE'
+red = 'xxxxxxxx'
+clave = 'xxxxxxxx'
 
 mensaje_completo = b''
 
