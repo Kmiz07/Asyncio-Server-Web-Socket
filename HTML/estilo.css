@@ -1,0 +1,97 @@
+* {
+    margin: 0px;
+}
+
+
+.marco {
+
+    background: rgb(91, 56, 208);
+    border-color: #fcfeff;
+    border-style: solid;
+    border-width: 2px;
+    border-radius: 10px;
+    box-shadow: #000000 5px 5px 5px;
+    padding: .5%;
+    color: aliceblue;
+
+
+}
+
+.boton {
+    border-radius: 14px;
+    text-shadow: #000000 1px 1px 3px;
+    box-shadow: #000000 2px 2px 4px;
+    width: 24%;
+}
+
+#marcobotones {
+    width: auto;
+    height: auto;
+    text-align: center;
+    margin-bottom: 1%;
+}
+
+body {
+    background-color: #0f0a76;
+}
+
+#panel {
+    height: 100%;
+    width: auto;
+    margin-bottom: 1%;
+
+}
+
+#general {
+    width: 96%;
+    height: 100%;
+    padding: 1%;
+    margin: 1%;
+    text-align: center;
+    text-shadow: #000000 5px 5px 5px;
+
+}
+
+h3 {
+    font-size: 18px;
+}
+
+
+
+h3 {
+    margin-top: 2%;
+    margin-bottom: 2%;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+    
+    
+
+}
+.btnok{
+    border-radius: 14px;
+    text-shadow: #000000 1px 1px 3px;
+    box-shadow: #000000 2px 2px 4px;
+}
+#marcocalef{
+    display: inline-block;
+    width: 97%
+}
+
+.alineador{
+    text-align:left;
+    width: auto;
+    display: inline-grid;
+
+}
+
