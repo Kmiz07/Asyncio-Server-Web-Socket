@@ -1,12 +1,11 @@
 import uasyncio
 import network
 import servsock
-from machine import Pin
-red =   'xxxxxxxxxxxxx'
-clave = 'xxxxxxxxxxxxx'
+red = 'MiFibra-5711'
+clave = 'viE5YEeE'
 
 mensaje_completo = b''
-estado_led=1
+
 def conecta_wifi():
             wifi = network.WLAN(network.STA_IF)
             wifi.active(True)
@@ -23,35 +22,30 @@ def conecta_wifi():
             print('MAC:     {:02x}:{:02x}:{:02x}:{:02x}:{:02x}'.format(a[0],a[1],a[2],a[3],a[4]))
             print('************************+')
 conecta_wifi()
-        
-def si_recibe(objeto,cliente,mensaje):
-    global estado_led
-    #objeto= para acceder a todas las funciones del objeto ejemplo: objeto.finaliza()
-    #cliente= lista con datos del cliente[socket,IP,puerto,¿es winsocket?(normalmente sera True)]
-    #mensaje=mensaje recibido
-    print(f"recibido: '{mensaje}' de IP: [{cliente[1][0]}]")
-    if mensaje == 'led':
-        if estado_led==0:
-            estado_led=1
-        else:
-            estado_led=0
-       
 
+def si_conecta(conexion,direccion):
+    print(f'id socket= {id(conexion)}\nDireccion={direccion}')
+    
+def si_desconecta(conexion):
+    print(f'\nsocket id={id(conexion[0])} DESCONECTADO')
+        
+def si_recibe(objeto,cliente,mensaje,tambuf):
+    global mensaje_completo
+    print(f'Mensaje recibido en socket id= {id(cliente[0])}\ncon direccion={cliente[1][0]}; Puerto={cliente[1][1]}\n\nMensaje:\n{mensaje}')
+    mensaje_completo = mensaje_completo + mensaje
+    if len(mensaje)<tambuf or tambuf==-1:#mensaje completado
+        lineas_de_mensaje = mensaje_completo.decode().split('\r\n')
+        print(lineas_de_mensaje[0])
+        
+        objeto.envia(cliente[0],mensaje_completo)
+        objeto.desconecta(cliente[0])
+        mensaje_completo=b''
+def si_error(conexion,error):
+    print(f'error {error} en socket id {id(conexion[0])}.')
 async def inicio():
     global tamaño_bufer
-    global estado_led
-    flash=Pin(0,Pin.IN)
-    estado_flash=1
-    led=Pin(2,Pin.OUT)
-    led.value(1)
-    servidor=servsock.Servsock(si_recibe,80,200,False)#funcion de retorno,puerto,tamaño bufer(-1, todo el mensaje),mensajes encriptados(si se encriptan los mensajes chrome no funcionara correctamente)
+    servidor=servsock.Servsock(si_conecta,si_desconecta,si_recibe,si_error,80,-1)
     while True:
-        if flash.value() != estado_flash:
-            await servidor.envio_a_clientes(f'Flash={flash.value()}')
-            estado_flash=flash.value()
-            await uasyncio.sleep(0)
-        if led.value() != estado_led:
-            led.value(estado_led)
-            await servidor.envio_a_clientes(f'led={led.value()}')
-        await uasyncio.sleep(0)
+        await uasyncio.sleep(10)
+#         print('.',end='')
 uasyncio.run(inicio())
