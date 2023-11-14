@@ -36,14 +36,14 @@ class Servsock:
             if conexion:
                 self.clientes.append([conexion,direccion,False])
             await uasyncio.sleep(0)
-        for cliente in clientes:
+        for cliente in self.clientes:
             cliente[0].close()
-        clientes.clear()
+        self.clientes.clear()
         self.servidor.close()
-           
+        print('TERMINADO')   
             
     async def recibe_datos(self):
-        while not self.terminar:
+        while not self.terminar:      
             mensaje_completo=b''
             for cliente in self.clientes:
                 try:
@@ -59,7 +59,7 @@ class Servsock:
                             if len(mensaje)<self.tambuf or self.tambuf==-1:break
                     await self.procesa(cliente,mensaje_completo)
             await uasyncio.sleep(0)
-        
+            
     async def finaliza(self):
         await self.desconecta_global()
         self.terminar=True
@@ -74,6 +74,7 @@ class Servsock:
     async def envio_global(self,mensaje):
         for cliente in self.clientes:
             await self.envia(cliente,mensaje)
+            await uasyncio.sleep(0)
                         
     async def desconecta(self,cliente):
         cliente[0].close()
@@ -103,10 +104,12 @@ class Servsock:
             await self.desconecta(cliente)
             
     async def envio_a_clientes(self,mensaje):
-        if len(self.clientes)>0:
-            mensajeenv= self.encoder(self.enviarws(mensaje,self.encriptado))
+        mensajeenv= self.encoder(self.enviarws(mensaje,self.encriptado))
+        if len(self.clientes)>0:        
             await self.envio_global(self.encoder(self.enviarws(mensaje,self.encriptado)))
-            
+    async def envio_a_cliente(self,cliente,mensaje):
+        mensajeenv= self.encoder(self.enviarws(mensaje,self.encriptado))
+        await self.envia(cliente,mensajeenv)
             
             
     async def procesa(self,cliente,mensaje):
@@ -150,8 +153,9 @@ class Servsock:
                     with open(nombre,'r')as f:
                         for xlin in f:
                             xline=xlin.replace('XXX.XXX.XXX.XXX',host)
-                            await uasyncio.sleep(0)
                             await self.envia(cliente,xline)
+                            await uasyncio.sleep(0)
+
                 else:
                     xlin="HTTP/1.1 404 OK\r\nContent-Type: \text/html\r\nConnection: keep-alive\r\n\r\nerror\r\n"
                     await self.envia(cliente,xlin)
@@ -201,11 +205,12 @@ class Servsock:
                 msg=data[14:]
                 strcrypto=data[10:14]
             result=self.encdecrypt(msg,strcrypto)
-            await self.si_recibe(self,cliente,result)
+#             await self.si_recibe(self,cliente,result)
+            uasyncio.create_task(self.si_recibe(self,cliente,result))
             if self.enviobool:
                 await uasyncio.sleep(0)
                 mensajeenv=self.enviarws("OK recibido correctamente.",self.encriptado)
-                data=b''
+#                 data=b''
                 mensajeenv= self.encoder(mensajeenv)
                 await self.envia(cliente,mensajeenv)
                 self.enviobool=False

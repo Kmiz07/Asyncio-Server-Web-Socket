@@ -2,13 +2,14 @@ import uasyncio
 import network
 import servsock
 from machine import Pin
-red = 'xxxxxxxxxxx'
-clave = 'xxxxxxxxxx'
+red = '***********'
+clave = '***********'
 mensaje_completo = b''
 estado_led=1
 flash=Pin(0,Pin.IN)
 led=Pin(2,Pin.OUT)
 led.value(1)
+
 def conecta_wifi():
             wifi = network.WLAN(network.STA_IF)
             wifi.active(True)
@@ -31,15 +32,18 @@ async def si_recibe(objeto,cliente,mensaje):
     #objeto= para acceder a todas las funciones del objeto ejemplo: objeto.finaliza()
     #cliente= lista con datos del cliente[socket,IP,puerto,¿es winsocket?(normalmente sera True)]
     #mensaje=mensaje recibido
-    print(f"recibido: '{mensaje}' de IP: [{cliente[1][0]}]")
+#     print(f"recibido: '{mensaje}' de IP: [{cliente[1][0]}]")
     if mensaje == 'led':
         if estado_led==0:
             estado_led=1
         else:
             estado_led=0
     if mensaje== 'WS Conectado':
-        await objeto.envio_a_clientes(f'Flash={flash.value()}')
-        await objeto.envio_a_clientes(f'led={led.value()}')
+        uasyncio.create_task(objeto.envio_a_cliente(cliente,f'Flash={flash.value()}'))
+        uasyncio.create_task(objeto.envio_a_cliente(cliente,f'led={led.value()}'))
+    if mensaje == 'apaga':
+        uasyncio.create_task(objeto.finaliza())
+        
 async def inicio():
     global tamaño_bufer
     global estado_led
@@ -48,14 +52,14 @@ async def inicio():
     estado_flash=1
     led=Pin(2,Pin.OUT)
     led.value(1)
-    servidor=servsock.Servsock(si_recibe,80,200,False)#funcion de retorno,puerto,tamaño bufer(-1, todo el mensaje),mensajes encriptados(si se encriptan los mensajes chrome no funcionara correctamente)
+    servidor=servsock.Servsock(si_recibe,80,-1,False)#funcion de retorno,puerto,tamaño bufer(-1, todo el mensaje),mensajes encriptados(si se encriptan los mensajes chrome no funcionara correctamente)
     while True:
         if flash.value() != estado_flash:
-            await servidor.envio_a_clientes(f'Flash={flash.value()}')
+            uasyncio.create_task(servidor.envio_a_clientes(f'Flash={flash.value()}'))
             estado_flash=flash.value()
             await uasyncio.sleep(0)
         if led.value() != estado_led:
             led.value(estado_led)
-            await servidor.envio_a_clientes(f'led={led.value()}')
+            uasyncio.create_task(servidor.envio_a_clientes(f'led={led.value()}'))
         await uasyncio.sleep(0)
 uasyncio.run(inicio())

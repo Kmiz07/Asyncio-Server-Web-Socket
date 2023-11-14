@@ -10,6 +10,10 @@ cliWebSocket();
 function pulsado(){
     doSend("led");
 }
+
+function apaga(){
+    doSend("apaga")
+}
 function cliWebSocket() {
     websocket = new WebSocket(wsUri);
     websocket.onopen = function (evt) {
