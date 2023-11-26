@@ -2,14 +2,14 @@ import uasyncio
 import network
 import servsock
 from machine import Pin
-red = '***********'
-clave = '***********'
+red = 'xxxxxxxxxx'
+clave = 'xxxxxxxxx'
 mensaje_completo = b''
 estado_led=1
 flash=Pin(0,Pin.IN)
 led=Pin(2,Pin.OUT)
 led.value(1)
-
+final=False
 def conecta_wifi():
             wifi = network.WLAN(network.STA_IF)
             wifi.active(True)
@@ -28,7 +28,7 @@ def conecta_wifi():
 conecta_wifi()
         
 async def si_recibe(objeto,cliente,mensaje):
-    global estado_led
+    global estado_led, final
     #objeto= para acceder a todas las funciones del objeto ejemplo: objeto.finaliza()
     #cliente= lista con datos del cliente[socket,IP,puerto,¿es winsocket?(normalmente sera True)]
     #mensaje=mensaje recibido
@@ -42,10 +42,12 @@ async def si_recibe(objeto,cliente,mensaje):
         uasyncio.create_task(objeto.envio_a_cliente(cliente,f'Flash={flash.value()}'))
         uasyncio.create_task(objeto.envio_a_cliente(cliente,f'led={led.value()}'))
     if mensaje == 'apaga':
-        uasyncio.create_task(objeto.finaliza())
+        await objeto.finaliza()
+    if mensaje== 'FIN':
+        final=True
         
 async def inicio():
-    global tamaño_bufer
+    global tamaño_bufer,final
     global estado_led
     estado_flash=1
     flash=Pin(0,Pin.IN)
@@ -53,7 +55,7 @@ async def inicio():
     led=Pin(2,Pin.OUT)
     led.value(1)
     servidor=servsock.Servsock(si_recibe,80,-1,False)#funcion de retorno,puerto,tamaño bufer(-1, todo el mensaje),mensajes encriptados(si se encriptan los mensajes chrome no funcionara correctamente)
-    while True:
+    while not final:
         if flash.value() != estado_flash:
             uasyncio.create_task(servidor.envio_a_clientes(f'Flash={flash.value()}'))
             estado_flash=flash.value()

@@ -40,28 +40,27 @@ class Servsock:
             cliente[0].close()
         self.clientes.clear()
         self.servidor.close()
-        print('TERMINADO')   
+        self.servidor=None
+        print('TERMINADO')
+        self.si_recibe(self,None,'FIN')
             
     async def recibe_datos(self):
         while not self.terminar:      
-            mensaje_completo=b''
+            
             for cliente in self.clientes:
-                try:
-                    mensaje=cliente[0].read(self.tambuf)
-                except:
-                    pass
-                if mensaje:
-                    mensaje_completo+=mensaje
-                    while mensaje:
-                        mensaje=cliente[0].read(self.tambuf)
-                        if mensaje:
-                            mensaje_completo+=mensaje
-                            if len(mensaje)<self.tambuf or self.tambuf==-1:break
-                    await self.procesa(cliente,mensaje_completo)
+                mensaje_completo=b''
+                while True:
+                    try:
+                        mensaje=cliente[0].readline()
+#                         if mensaje:print(mensaje)
+                    except:
+                        pass
+                    if mensaje == b'\r\n' or mensaje ==b'' or not mensaje:break
+                    mensaje_completo+=mensaje       
+                if mensaje_completo:await self.procesa(cliente,mensaje_completo)
             await uasyncio.sleep(0)
             
     async def finaliza(self):
-        await self.desconecta_global()
         self.terminar=True
         
     async def envia(self,cliente,mensaje):
@@ -77,12 +76,15 @@ class Servsock:
             await uasyncio.sleep(0)
                         
     async def desconecta(self,cliente):
+#         print(f'\ncliente a cerrar:{cliente}\n')
         cliente[0].close()
+#         print(f'\ncerrando socket{cliente}. clientes:{self.clientes}\n')
         self.clientes.remove(cliente)
         
     async def desconecta_global(self):
         for cliente in self.clientes:
             await self.desconecta(cliente)
+        
             
     async def procesaws(self,cliente,mensaje):
         magicstring='258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
@@ -118,14 +120,19 @@ class Servsock:
         IP=cliente[1][0]
         puerto=cliente[1][1]
         esWS=cliente[2]
+#         try:
+#             print(f'>>>>>>>>>>>>>>{mensaje.decode()}')
+#         except:
+#             pass
         if not esWS:
+            
             data=mensaje.decode()
             lineas=data.split('\r\n')
             palabras=lineas[0].split(' ')
             host=lineas[1].split(' ')[1]
             if palabras[0]=='GET':
                 if palabras[1]=='/':
-                    if 'Upgrade: websocket' in mensaje:
+                    if 'Upgrade: websocket' in data:
                         await self.procesaws(cliente,lineas)
                         return
                     else:
@@ -150,16 +157,20 @@ class Servsock:
                     nombre='/HTML/'+nombre
                     cabecera="HTTP/1.1 200 OK\r\nContent-Type: "+variable+"\r\nContent-Lenght: "+str(uos.stat(nombre)[6])+"\r\nConnection: keep-alive\r\n\r\n"
                     await self.envia(cliente,cabecera)
-                    with open(nombre,'r')as f:
-                        for xlin in f:
-                            xline=xlin.replace('XXX.XXX.XXX.XXX',host)
-                            await self.envia(cliente,xline)
-                            await uasyncio.sleep(0)
+                    if not binario:
+                        with open(nombre,'r')as f:
+                            for xlin in f:
+                                xline=xlin.replace('XXX.XXX.XXX.XXX',host)
+                                await self.envia(cliente,xline)
+                                await uasyncio.sleep(0)
+                    else:
+                        with open(nombre,'rb')as f:
+                            await self.envia(cliente,f.read())
 
                 else:
                     xlin="HTTP/1.1 404 OK\r\nContent-Type: \text/html\r\nConnection: keep-alive\r\n\r\nerror\r\n"
                     await self.envia(cliente,xlin)
-                await self.desconecta(cliente)
+            await self.desconecta(cliente)
         else:#Si es ws.
             data=mensaje
             #El byte uno determina bit7=ultimo/unico parte de MENSAJE
